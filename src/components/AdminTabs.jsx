@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, ListOrdered } from 'lucide-react';
+import { ShoppingCart, ListOrdered, QrCode } from 'lucide-react';
 
 export default function AdminTabs() {
   const location = useLocation();
@@ -29,6 +29,17 @@ export default function AdminTabs() {
         }}
       >
         <ShoppingCart size={18} /> Produk
+      </Link>
+      <Link 
+        to="/admin/qris" 
+        className="btn"
+        style={{ 
+          backgroundColor: path === '/admin/qris' ? 'var(--accent)' : 'var(--surface-card)',
+          color: path === '/admin/qris' ? '#fff' : 'var(--text-muted)',
+          display: 'flex', alignItems: 'center', gap: '0.5rem'
+        }}
+      >
+        <QrCode size={18} /> QRIS
       </Link>
     </div>
   );

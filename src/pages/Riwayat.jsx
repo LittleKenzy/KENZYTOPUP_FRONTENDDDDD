@@ -225,6 +225,17 @@ export default function Riwayat() {
                 <span style={{ fontWeight: 600 }}>{txDetail.paymentMethod}</span>
               </div>
             )}
+            
+            {txDetail.paymentProof && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Bukti Pembayaran</span>
+                <img 
+                  src={txDetail.paymentProof} 
+                  alt="Bukti Transfer" 
+                  style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', borderRadius: '0.5rem', border: '1px solid var(--border)' }} 
+                />
+              </div>
+            )}
 
             <div style={{ backgroundColor: 'var(--secondary-bg)', padding: '1rem', borderRadius: '0.5rem', margin: '1.5rem 0' }}>
               <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>{txDetail.product?.name}</div>

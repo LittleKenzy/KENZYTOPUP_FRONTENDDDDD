@@ -350,6 +350,31 @@ export default function AdminDashboard() {
               <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>Total: {formatRupiah(txDetail.totalPrice)}</div>
             </div>
 
+            {txDetail.paymentProof && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label className="form-label">Bukti Pembayaran (QRIS):</label>
+                <div 
+                  style={{ 
+                    marginTop: '0.5rem', 
+                    borderRadius: '0.5rem', 
+                    overflow: 'hidden', 
+                    border: '1px solid var(--border)',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => window.open(txDetail.paymentProof, '_blank')}
+                >
+                  <img 
+                    src={txDetail.paymentProof} 
+                    alt="Bukti Transfer" 
+                    style={{ width: '100%', maxHeight: '300px', objectFit: 'contain', display: 'block' }} 
+                  />
+                  <div style={{ padding: '0.5rem', textAlign: 'center', fontSize: '0.75rem', backgroundColor: 'rgba(0,0,0,0.2)', color: 'var(--text-muted)' }}>
+                    Klik untuk memperbesar
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="form-group">
               <label className="form-label">Catatan Admin (opsional)</label>
               <textarea 

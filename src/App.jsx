@@ -13,6 +13,7 @@ import Layanan from './pages/Layanan';
 import Riwayat from './pages/Riwayat';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminProducts from './pages/admin/Products';
+import AdminQris from './pages/admin/Qris';
 import WhatsAppButton from './components/WhatsAppButton';
 
 function App() {
@@ -50,6 +51,14 @@ function App() {
                 element={
                   <AdminRoute>
                     <AdminProducts />
+                  </AdminRoute>
+                } 
+              />
+              <Route 
+                path="/admin/qris" 
+                element={
+                  <AdminRoute>
+                    <AdminQris />
                   </AdminRoute>
                 } 
               />
