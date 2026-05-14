@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, ListOrdered, QrCode } from 'lucide-react';
+import { ShoppingCart, ListOrdered, QrCode, Newspaper } from 'lucide-react';
 
 export default function AdminTabs() {
   const location = useLocation();
@@ -40,6 +40,17 @@ export default function AdminTabs() {
         }}
       >
         <QrCode size={18} /> QRIS
+      </Link>
+      <Link 
+        to="/admin/news" 
+        className="btn"
+        style={{ 
+          backgroundColor: path === '/admin/news' ? 'var(--accent)' : 'var(--surface-card)',
+          color: path === '/admin/news' ? '#fff' : 'var(--text-muted)',
+          display: 'flex', alignItems: 'center', gap: '0.5rem'
+        }}
+      >
+        <Newspaper size={18} /> Berita
       </Link>
     </div>
   );

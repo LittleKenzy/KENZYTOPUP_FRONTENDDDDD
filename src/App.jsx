@@ -14,6 +14,7 @@ import Riwayat from './pages/Riwayat';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminProducts from './pages/admin/Products';
 import AdminQris from './pages/admin/Qris';
+import AdminNews from './pages/admin/News';
 import WhatsAppButton from './components/WhatsAppButton';
 
 function App() {
@@ -59,6 +60,14 @@ function App() {
                 element={
                   <AdminRoute>
                     <AdminQris />
+                  </AdminRoute>
+                } 
+              />
+              <Route 
+                path="/admin/news" 
+                element={
+                  <AdminRoute>
+                    <AdminNews />
                   </AdminRoute>
                 } 
               />
