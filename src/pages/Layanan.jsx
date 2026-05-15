@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatRupiah, getCategoryLabel, getCategoryIcon } from '../utils/formatters';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
+import { Tag, Gift } from 'lucide-react';
 
 const CATEGORIES = ['GAME', 'EWALLET', 'PLN', 'PULSA', 'PAKET_DATA'];
 
@@ -20,6 +21,7 @@ export default function Layanan() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedBrand, setSelectedBrand] = useState(null);
+  const [flashSales, setFlashSales] = useState([]);
   
   // Modal State
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -33,10 +35,31 @@ export default function Layanan() {
   const [isQrisZoomed, setIsQrisZoomed] = useState(false);
   const [searchBrandQuery, setSearchBrandQuery] = useState('');
   const [searchItemQuery, setSearchItemQuery] = useState('');
+  const [discountCode, setDiscountCode] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState(0);
+  const [isValidatingCode, setIsValidatingCode] = useState(false);
 
   useEffect(() => {
     fetchProducts(currentCategory);
+    fetchFlashSales();
   }, [currentCategory]);
+
+  // Auto-open product modal if productId is in URL (e.g. from Flash Sale Banner)
+  useEffect(() => {
+    const targetProductId = searchParams.get('productId');
+    if (targetProductId && products.length > 0) {
+      const targetProduct = products.find(p => p.id === targetProductId);
+      if (targetProduct && !selectedProduct) {
+        setSelectedBrand(targetProduct.operatorCode); // Auto select brand
+        handleBuyClick(targetProduct);
+        
+        // Remove productId from URL so it doesn't reopen on refresh
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('productId');
+        setSearchParams(newParams, { replace: true });
+      }
+    }
+  }, [products, searchParams, selectedProduct]);
 
   useEffect(() => {
     api.get('/qris')
@@ -61,6 +84,17 @@ export default function Layanan() {
     }
   };
 
+  const fetchFlashSales = async () => {
+    try {
+      const res = await api.get('/flash-sales');
+      if (res.data?.success) {
+        setFlashSales(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch flash sales', err);
+    }
+  };
+
   const handleCategoryChange = (cat) => {
     setSearchParams({ category: cat });
     setSelectedBrand(null);
@@ -77,7 +111,58 @@ export default function Layanan() {
     setQuantity(1);
     setPaymentMethod('QRIS');
     setPaymentProofFile(null);
+    setDiscountCode('');
+    setAppliedDiscount(0);
   };
+
+  const getDiscountedPrice = (product) => {
+    const sale = flashSales.find(s => 
+      s.productId === product.id || 
+      (s.category === product.category && !s.productId) || 
+      (!s.productId && !s.category)
+    );
+    if (!sale) return product.price;
+    return Math.round(product.price * (1 - sale.discountPercent / 100));
+  };
+
+  const handleValidateCode = async () => {
+    if (!discountCode) return;
+    setIsValidatingCode(true);
+    try {
+      const res = await api.post('/loyalty/validate-code', { discountCode });
+      if (res.data?.success) {
+        const discAmt = res.data.data.discountAmount;
+        const currentTotal = getDiscountedPrice(selectedProduct) * quantity;
+        const minPurchase = discAmt * 2.5;
+
+        if (currentTotal < minPurchase) {
+          setAppliedDiscount(0);
+          setToast({ message: `Minimal belanja Rp${minPurchase.toLocaleString('id-ID')} untuk voucher ini`, type: 'error' });
+          return;
+        }
+
+        setAppliedDiscount(discAmt);
+        setToast({ message: res.data.message, type: 'success' });
+      }
+    } catch (err) {
+      setAppliedDiscount(0);
+      setToast({ message: err.response?.data?.message || 'Kode diskon tidak valid', type: 'error' });
+    } finally {
+      setIsValidatingCode(false);
+    }
+  };
+
+  // Check discount validity if quantity changes
+  useEffect(() => {
+    if (appliedDiscount > 0 && selectedProduct) {
+      const currentTotal = getDiscountedPrice(selectedProduct) * quantity;
+      if (currentTotal < appliedDiscount * 2.5) {
+        setAppliedDiscount(0);
+        setDiscountCode('');
+        setToast({ message: 'Voucher dilepas karena total belanja kurang dari batas minimal', type: 'error' });
+      }
+    }
+  }, [quantity, selectedProduct]);
 
   const getTargetLabel = () => {
     switch (currentCategory) {
@@ -109,6 +194,7 @@ export default function Layanan() {
         formData.append('quantity', parseInt(quantity, 10));
         formData.append('paymentMethod', paymentMethod);
         formData.append('paymentProof', paymentProofFile);
+        if (appliedDiscount > 0) formData.append('discountCode', discountCode);
 
         res = await api.post('/transactions', formData);
       } else {
@@ -116,7 +202,8 @@ export default function Layanan() {
           productId: selectedProduct.id,
           targetId,
           quantity: parseInt(quantity, 10),
-          paymentMethod
+          paymentMethod,
+          discountCode: appliedDiscount > 0 ? discountCode : undefined
         });
       }
       
@@ -270,26 +357,47 @@ export default function Layanan() {
             {products
               .filter(p => p.operatorCode === selectedBrand)
               .filter(p => p.name.toLowerCase().includes(searchItemQuery.toLowerCase()))
-              .map(product => (
-                <div key={product.id} className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ marginBottom: '1.5rem', flexGrow: 1 }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 700, marginBottom: '0.25rem' }}>
-                      {product.operatorCode}
+              .map(product => {
+                const finalPrice = getDiscountedPrice(product);
+                const hasDiscount = finalPrice < product.price;
+
+                return (
+                  <div key={product.id} className="card" style={{ display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+                    {hasDiscount && (
+                      <div style={{ position: 'absolute', top: 0, right: 0, backgroundColor: '#ef4444', color: 'white', padding: '0.25rem 0.75rem', borderBottomLeftRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                        Flash Sale
+                      </div>
+                    )}
+                    <div style={{ marginBottom: '1.5rem', flexGrow: 1 }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 700, marginBottom: '0.25rem' }}>
+                        {product.operatorCode}
+                      </div>
+                      <h3 style={{ fontSize: '1.125rem', marginBottom: '0.5rem' }}>{product.name}</h3>
+                      {hasDiscount ? (
+                        <div>
+                          <div style={{ fontSize: '0.875rem', textDecoration: 'line-through', color: 'var(--text-muted)' }}>
+                            {formatRupiah(product.price)}
+                          </div>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ef4444' }}>
+                            {formatRupiah(finalPrice)}
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>
+                          {formatRupiah(product.price)}
+                        </div>
+                      )}
                     </div>
-                    <h3 style={{ fontSize: '1.125rem', marginBottom: '0.5rem' }}>{product.name}</h3>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>
-                      {formatRupiah(product.price)}
-                    </div>
+                    <button 
+                      onClick={() => handleBuyClick(product)}
+                      className="btn btn-primary" 
+                      style={{ width: '100%' }}
+                    >
+                      Beli
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => handleBuyClick(product)}
-                    className="btn btn-primary" 
-                    style={{ width: '100%' }}
-                  >
-                    Beli
-                  </button>
-                </div>
-              ))}
+                );
+              })}
           </>
         ) : (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 0', color: 'var(--text-muted)' }}>
@@ -313,7 +421,16 @@ export default function Layanan() {
           <form onSubmit={handleSubmitOrder}>
             <div style={{ backgroundColor: 'var(--secondary-bg)', padding: '1rem', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
               <h4 style={{ marginBottom: '0.25rem' }}>{selectedProduct.name}</h4>
-              <div style={{ color: 'var(--accent)', fontWeight: 700 }}>{formatRupiah(selectedProduct.price)}</div>
+              {getDiscountedPrice(selectedProduct) < selectedProduct.price ? (
+                <div>
+                  <span style={{ fontSize: '0.875rem', textDecoration: 'line-through', color: 'var(--text-muted)', marginRight: '0.5rem' }}>
+                    {formatRupiah(selectedProduct.price)}
+                  </span>
+                  <span style={{ color: '#ef4444', fontWeight: 700 }}>{formatRupiah(getDiscountedPrice(selectedProduct))}</span>
+                </div>
+              ) : (
+                <div style={{ color: 'var(--accent)', fontWeight: 700 }}>{formatRupiah(selectedProduct.price)}</div>
+              )}
             </div>
 
             <div className="form-group">
@@ -448,6 +565,36 @@ export default function Layanan() {
               </div>
             )}
 
+            <div className="form-group" style={{ marginTop: '1.5rem' }}>
+              <label className="form-label">Kode Diskon Poin</label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input 
+                  type="text" 
+                  className="form-input"
+                  placeholder="Masukkan kode diskon"
+                  value={discountCode}
+                  onChange={(e) => {
+                    setDiscountCode(e.target.value);
+                    setAppliedDiscount(0); // reset kalau diganti
+                  }}
+                  disabled={isSubmitting || isValidatingCode}
+                />
+                <button 
+                  type="button" 
+                  className="btn btn-outline" 
+                  onClick={handleValidateCode}
+                  disabled={!discountCode || isSubmitting || isValidatingCode}
+                >
+                  {isValidatingCode ? 'Cek...' : 'Gunakan'}
+                </button>
+              </div>
+              {appliedDiscount > 0 && (
+                <small style={{ color: '#ef4444', display: 'block', marginTop: '0.5rem', fontWeight: 'bold' }}>
+                  Berhasil! Diskon Rp{appliedDiscount.toLocaleString()} diterapkan.
+                </small>
+              )}
+            </div>
+
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
@@ -458,8 +605,13 @@ export default function Layanan() {
             }}>
               <div>
                 <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Total Pembayaran</div>
+                {appliedDiscount > 0 && (
+                  <div style={{ fontSize: '0.875rem', textDecoration: 'line-through', color: 'var(--text-muted)' }}>
+                    {formatRupiah(getDiscountedPrice(selectedProduct) * quantity)}
+                  </div>
+                )}
                 <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>
-                  {formatRupiah(selectedProduct.price * quantity)}
+                  {formatRupiah(Math.max(0, getDiscountedPrice(selectedProduct) * quantity - appliedDiscount))}
                 </div>
               </div>
               <button 

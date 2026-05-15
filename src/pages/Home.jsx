@@ -4,15 +4,18 @@ import { ArrowRight, Zap, Shield, Clock, Bell } from 'lucide-react';
 import { getCategoryIcon, getCategoryLabel } from '../utils/formatters';
 import api from '../api/axios';
 import Modal from '../components/Modal';
+import FlashSaleBanner from '../components/FlashSaleBanner';
 
 const CATEGORIES = ['GAME', 'EWALLET', 'PLN', 'PULSA', 'PAKET_DATA'];
 
 export default function Home() {
   const [news, setNews] = useState([]);
   const [selectedNews, setSelectedNews] = useState(null);
+  const [flashSales, setFlashSales] = useState([]);
 
   useEffect(() => {
     fetchNews();
+    fetchFlashSales();
   }, []);
 
   const fetchNews = async () => {
@@ -23,6 +26,17 @@ export default function Home() {
       }
     } catch (err) {
       console.error('Failed to fetch news', err);
+    }
+  };
+
+  const fetchFlashSales = async () => {
+    try {
+      const res = await api.get('/flash-sales');
+      if (res.data?.success) {
+        setFlashSales(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch flash sales', err);
     }
   };
 
@@ -50,6 +64,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Flash Sale Banner */}
+      <FlashSaleBanner flashSales={flashSales} />
 
       {/* News Banner Section */}
       {news.length > 0 && (

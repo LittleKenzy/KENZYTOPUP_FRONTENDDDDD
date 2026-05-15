@@ -27,7 +27,7 @@ export default function Toast({ message, type = 'success', onClose }) {
       display: 'flex',
       alignItems: 'center',
       gap: '1rem',
-      zIndex: 100,
+      zIndex: 9999,
     }}>
       <Icon size={24} color={bg} />
       <span style={{ fontWeight: 500 }}>{message}</span>

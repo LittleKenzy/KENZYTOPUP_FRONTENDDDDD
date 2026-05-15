@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, ListOrdered, QrCode, Newspaper } from 'lucide-react';
+import { ShoppingCart, ListOrdered, QrCode, Newspaper, Tag, Gift } from 'lucide-react';
 
 export default function AdminTabs() {
   const location = useLocation();
@@ -51,6 +51,28 @@ export default function AdminTabs() {
         }}
       >
         <Newspaper size={18} /> Berita
+      </Link>
+      <Link 
+        to="/admin/flash-sales" 
+        className="btn"
+        style={{ 
+          backgroundColor: path === '/admin/flash-sales' ? 'var(--accent)' : 'var(--surface-card)',
+          color: path === '/admin/flash-sales' ? '#fff' : 'var(--text-muted)',
+          display: 'flex', alignItems: 'center', gap: '0.5rem'
+        }}
+      >
+        <Tag size={18} /> Flash Sale
+      </Link>
+      <Link 
+        to="/admin/loyalty" 
+        className="btn"
+        style={{ 
+          backgroundColor: path === '/admin/loyalty' ? 'var(--accent)' : 'var(--surface-card)',
+          color: path === '/admin/loyalty' ? '#fff' : 'var(--text-muted)',
+          display: 'flex', alignItems: 'center', gap: '0.5rem'
+        }}
+      >
+        <Gift size={18} /> Loyalty
       </Link>
     </div>
   );
