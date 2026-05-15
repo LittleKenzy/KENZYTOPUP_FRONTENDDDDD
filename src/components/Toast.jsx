@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function Toast({ message, type = 'success', onClose }) {
@@ -14,7 +15,7 @@ export default function Toast({ message, type = 'success', onClose }) {
   const bg = type === 'success' ? 'var(--success)' : 'var(--danger)';
   const Icon = type === 'success' ? CheckCircle : AlertCircle;
 
-  return (
+  return createPortal(
     <div className="animate-slide-up" style={{
       position: 'fixed',
       bottom: '2rem',
@@ -34,6 +35,7 @@ export default function Toast({ message, type = 'success', onClose }) {
       <button onClick={onClose} style={{ marginLeft: '1rem', color: 'var(--text-muted)' }}>
         <X size={18} />
       </button>
-    </div>
+    </div>,
+    document.body
   );
 }

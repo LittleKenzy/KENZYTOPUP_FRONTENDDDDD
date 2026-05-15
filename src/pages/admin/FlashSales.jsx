@@ -331,8 +331,8 @@ export default function FlashSales() {
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+            <div className="form-group" style={{ flex: '1 1 200px', margin: 0 }}>
               <label className="form-label">Waktu Mulai</label>
               <input 
                 type="datetime-local" 
@@ -342,7 +342,7 @@ export default function FlashSales() {
                 required
               />
             </div>
-            <div className="form-group">
+            <div className="form-group" style={{ flex: '1 1 200px', margin: 0 }}>
               <label className="form-label">Waktu Berakhir</label>
               <input 
                 type="datetime-local" 

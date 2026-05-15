@@ -183,6 +183,11 @@ export default function Layanan() {
       setToast({ message: 'Bukti transfer QRIS wajib diupload!', type: 'error' });
       return;
     }
+
+    if (discountCode && appliedDiscount === 0) {
+      setToast({ message: 'Kode voucher belum divalidasi atau tidak valid. Silakan klik "Gunakan" atau kosongkan kolom jika tidak jadi memakai voucher.', type: 'error' });
+      return;
+    }
     
     setIsSubmitting(true);
     try {

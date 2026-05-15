@@ -7,7 +7,14 @@ export default function AdminTabs() {
   const path = location.pathname;
 
   return (
-    <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+    <div style={{ 
+      display: 'flex', 
+      flexWrap: 'wrap',
+      gap: '0.5rem', 
+      marginBottom: '2rem', 
+      borderBottom: '1px solid var(--border)', 
+      paddingBottom: '1rem' 
+    }}>
       <Link 
         to="/admin" 
         className="btn"
