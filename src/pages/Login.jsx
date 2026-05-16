@@ -79,6 +79,11 @@ export default function Login() {
                 required
               />
             </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+              <Link to="/forgot-password" style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} className="hover-text-accent">
+                Lupa Password?
+              </Link>
+            </div>
           </div>
 
           <button 
