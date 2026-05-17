@@ -5,6 +5,7 @@ import { getCategoryIcon, getCategoryLabel } from '../utils/formatters';
 import api from '../api/axios';
 import Modal from '../components/Modal';
 import FlashSaleBanner from '../components/FlashSaleBanner';
+import DailyMission from '../components/DailyMission';
 
 const CATEGORIES = ['GAME', 'EWALLET', 'PLN', 'PULSA', 'PAKET_DATA'];
 
@@ -67,6 +68,8 @@ export default function Home() {
 
       {/* Flash Sale Banner */}
       <FlashSaleBanner flashSales={flashSales} />
+
+
 
       {/* News Banner Section */}
       {news.length > 0 && (
@@ -185,6 +188,11 @@ export default function Home() {
           </div>
         )}
       </Modal>
+
+      {/* Daily Mission (Only shows if logged in) */}
+      <div className="container" style={{ padding: '2rem 1.5rem 0' }}>
+        <DailyMission />
+      </div>
 
       {/* Categories Grid */}
       <section className="container" style={{ padding: '5rem 1.5rem' }}>

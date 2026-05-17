@@ -187,7 +187,7 @@ export default function Layanan() {
     if (discountCode && appliedDiscount === 0) {
       setToast({ message: 'Kode voucher belum divalidasi atau tidak valid. Silakan klik "Gunakan" atau kosongkan kolom jika tidak jadi memakai voucher.', type: 'error' });
       return;
-    }
+    } 
     
     setIsSubmitting(true);
     try {

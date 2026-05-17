@@ -19,6 +19,14 @@ export default function FlashSales() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
+  // Blast Target states (for create)
+  const [blastTargetType, setBlastTargetType] = useState('all'); // 'all', 'selected', 'none'
+  const [blastSelectedUserIds, setBlastSelectedUserIds] = useState([]);
+  const [blastUsers, setBlastUsers] = useState([]);
+  const [blastSearch, setBlastSearch] = useState('');
+  const [loadingBlastUsers, setLoadingBlastUsers] = useState(false);
+  
+
   // Form states
   const [formData, setFormData] = useState({
     title: '',
@@ -35,6 +43,41 @@ export default function FlashSales() {
     fetchFlashSales();
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    if (blastTargetType === 'selected' && !editingId && isModalOpen) {
+      fetchBlastUsers();
+    }
+  }, [blastTargetType, blastSearch, editingId, isModalOpen]);
+
+  const fetchBlastUsers = async () => {
+    setLoadingBlastUsers(true);
+    try {
+      const res = await api.get(`/admin/blast/users?search=${blastSearch}&waVerified=true`);
+      if (res.data?.success) {
+        setBlastUsers(res.data.data);
+      }
+    } catch (err) {
+      console.error('Gagal memuat user blast');
+    } finally {
+      setLoadingBlastUsers(false);
+    }
+  };
+
+  const handleToggleBlastUserSelect = (id) => {
+    setBlastSelectedUserIds(prev => 
+      prev.includes(id) ? prev.filter(userId => userId !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllBlastUsers = () => {
+    if (blastSelectedUserIds.length === blastUsers.length) {
+      setBlastSelectedUserIds([]);
+    } else {
+      setBlastSelectedUserIds(blastUsers.map(u => u.id));
+    }
+  };
+
 
   const fetchFlashSales = async () => {
     try {
@@ -74,6 +117,9 @@ export default function FlashSales() {
       startAt: new Date().toISOString().slice(0, 16),
       endAt: new Date(Date.now() + 86400000).toISOString().slice(0, 16)
     });
+    setBlastTargetType('all');
+    setBlastSelectedUserIds([]);
+    setBlastSearch('');
     setIsModalOpen(true);
   };
 
@@ -111,6 +157,14 @@ export default function FlashSales() {
       if (editingId) {
         res = await api.put(`/admin/flash-sales/${editingId}`, payload);
       } else {
+        if (blastTargetType === 'selected' && blastSelectedUserIds.length === 0) {
+          setToast({ message: 'Pilih minimal satu user tujuan blast', type: 'error' });
+          setIsSubmitting(false);
+          return;
+        }
+
+        payload.blastUserIds = blastTargetType === 'selected' ? blastSelectedUserIds : blastTargetType;
+
         res = await api.post('/admin/flash-sales', payload);
       }
 
@@ -354,7 +408,73 @@ export default function FlashSales() {
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={isSubmitting}>
+          {!editingId && (
+            <div style={{ borderTop: '1px solid var(--border)', margin: '1.5rem 0 0', paddingTop: '1rem' }}>
+              <p style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--text)' }}>Target WhatsApp Blast (Otomatis)</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Flash sale baru akan di-blast via WhatsApp. Pilih penerimanya:</p>
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input type="radio" checked={blastTargetType === 'all'} onChange={() => setBlastTargetType('all')} />
+                  <span style={{ fontSize: '0.875rem' }}>Semua User</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input type="radio" checked={blastTargetType === 'selected'} onChange={() => setBlastTargetType('selected')} />
+                  <span style={{ fontSize: '0.875rem' }}>Pilih User</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input type="radio" checked={blastTargetType === 'none'} onChange={() => setBlastTargetType('none')} />
+                  <span style={{ fontSize: '0.875rem' }}>Jangan Kirim</span>
+                </label>
+              </div>
+
+              {blastTargetType === 'selected' && (
+                <div style={{ marginBottom: '1rem', border: '1px solid var(--border)', borderRadius: '0.5rem', padding: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Cari nama / WA..." 
+                      className="form-input"
+                      style={{ maxWidth: '200px', padding: '0.5rem' }}
+                      value={blastSearch}
+                      onChange={(e) => setBlastSearch(e.target.value)}
+                    />
+                    <div>
+                      <span style={{ fontSize: '0.75rem', marginRight: '1rem', color: 'var(--text-muted)' }}>
+                        {blastSelectedUserIds.length} terpilih
+                      </span>
+                      <button type="button" onClick={handleSelectAllBlastUsers} className="btn btn-outline" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>
+                        {blastSelectedUserIds.length === blastUsers.length && blastUsers.length > 0 ? 'Deselect All' : 'Select All'}
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '0.25rem' }}>
+                    {loadingBlastUsers ? (
+                       <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.875rem' }}>Memuat...</div>
+                    ) : blastUsers.length === 0 ? (
+                       <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Tidak ada user.</div>
+                    ) : (
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                        <tbody>
+                          {blastUsers.map(u => (
+                            <tr key={u.id} style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => handleToggleBlastUserSelect(u.id)}>
+                              <td style={{ padding: '0.5rem', width: '30px' }}>
+                                <input type="checkbox" checked={blastSelectedUserIds.includes(u.id)} readOnly />
+                              </td>
+                              <td style={{ padding: '0.5rem', fontWeight: 'bold' }}>{u.name}</td>
+                              <td style={{ padding: '0.5rem', color: 'var(--text-muted)' }}>{u.phone}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          )}
+
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1.5rem' }} disabled={isSubmitting}>
             {isSubmitting ? 'Menyimpan...' : 'Simpan Flash Sale'}
           </button>
         </form>

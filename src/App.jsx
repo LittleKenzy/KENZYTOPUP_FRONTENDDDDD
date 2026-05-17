@@ -19,6 +19,8 @@ import AdminQris from './pages/admin/Qris';
 import AdminNews from './pages/admin/News';
 import AdminFlashSales from './pages/admin/FlashSales';
 import AdminLoyalty from './pages/admin/Loyalty';
+import AdminMissions from './pages/admin/Missions';
+import AdminWaBlast from './pages/admin/WaBlast';
 import WhatsAppButton from './components/WhatsAppButton';
 
 function App() {
@@ -90,6 +92,22 @@ function App() {
                 element={
                   <AdminRoute>
                     <AdminLoyalty />
+                  </AdminRoute>
+                } 
+              />
+              <Route 
+                path="/admin/missions" 
+                element={
+                  <AdminRoute>
+                    <AdminMissions />
+                  </AdminRoute>
+                } 
+              />
+              <Route 
+                path="/admin/blast" 
+                element={
+                  <AdminRoute>
+                    <AdminWaBlast />
                   </AdminRoute>
                 } 
               />

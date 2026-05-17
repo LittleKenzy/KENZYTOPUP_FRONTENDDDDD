@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, ListOrdered, QrCode, Newspaper, Tag, Gift } from 'lucide-react';
+import { ShoppingCart, ListOrdered, QrCode, Newspaper, Tag, Gift, MessageSquare } from 'lucide-react';
 
 export default function AdminTabs() {
   const location = useLocation();
@@ -80,6 +80,28 @@ export default function AdminTabs() {
         }}
       >
         <Gift size={18} /> Loyalty
+      </Link>
+      <Link 
+        to="/admin/missions" 
+        className="btn"
+        style={{ 
+          backgroundColor: path === '/admin/missions' ? 'var(--accent)' : 'var(--surface-card)',
+          color: path === '/admin/missions' ? '#fff' : 'var(--text-muted)',
+          display: 'flex', alignItems: 'center', gap: '0.5rem'
+        }}
+      >
+        <Gift size={18} /> Misi Harian
+      </Link>
+      <Link 
+        to="/admin/blast" 
+        className="btn"
+        style={{ 
+          backgroundColor: path === '/admin/blast' ? 'var(--accent)' : 'var(--surface-card)',
+          color: path === '/admin/blast' ? '#fff' : 'var(--text-muted)',
+          display: 'flex', alignItems: 'center', gap: '0.5rem'
+        }}
+      >
+        <MessageSquare size={18} /> WA Blast
       </Link>
     </div>
   );
