@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { formatRupiah, formatDate } from '../../utils/formatters';
 import Modal from '../../components/Modal';
@@ -15,6 +15,8 @@ const STATUS_TABS = [
 ];
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
+  const { id: routeOrderId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentStatus = searchParams.get('status') || '';
   const currentSearch = searchParams.get('search') || '';
@@ -96,6 +98,13 @@ export default function AdminDashboard() {
     }
   };
 
+  useEffect(() => {
+    if (routeOrderId) {
+      setSelectedTx({ id: routeOrderId });
+      fetchTxDetail(routeOrderId);
+    }
+  }, [routeOrderId]);
+
   const handleStatusChange = (status) => {
     setSearchParams({ status, page: 1, search: currentSearch });
   };
@@ -127,6 +136,9 @@ export default function AdminDashboard() {
         setToast({ message: `Status berhasil diubah ke ${newStatus}`, type: 'success' });
         setSelectedTx(null);
         setTxDetail(null);
+        if (routeOrderId) {
+          navigate('/admin');
+        }
         fetchStats();
         fetchTransactions(currentStatus, currentPage, currentSearch);
       }
@@ -332,7 +344,13 @@ export default function AdminDashboard() {
       )}
 
       {/* Admin Action Modal */}
-      <Modal isOpen={!!selectedTx} onClose={() => { setSelectedTx(null); setTxDetail(null); }} title="Kelola Transaksi">
+      <Modal isOpen={!!selectedTx} onClose={() => { 
+        setSelectedTx(null); 
+        setTxDetail(null); 
+        if (routeOrderId) {
+          navigate('/admin');
+        }
+      }} title="Kelola Transaksi">
         {loadingDetail ? (
           <div style={{ padding: '2rem 0', textAlign: 'center' }}>Loading detail...</div>
         ) : txDetail ? (

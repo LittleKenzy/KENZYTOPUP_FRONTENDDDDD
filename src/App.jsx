@@ -56,6 +56,14 @@ function App() {
                 } 
               />
               <Route 
+                path="/admin/orders/:id" 
+                element={
+                  <AdminRoute>
+                    <AdminDashboard />
+                  </AdminRoute>
+                } 
+              />
+              <Route 
                 path="/admin/products" 
                 element={
                   <AdminRoute>
