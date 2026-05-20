@@ -37,7 +37,19 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchStats();
     fetchTransactions(currentStatus, currentPage, currentSearch);
-  }, [currentStatus, currentPage, currentSearch]);
+
+    // Auto-refresh stats and transactions list every 15 seconds to keep the dashboard live
+    const interval = setInterval(() => {
+      // Hanya refresh jika tidak sedang loading detail transaksi/modal tidak terbuka untuk kenyamanan
+      if (!selectedTx) {
+        fetchStats();
+        fetchTransactions(currentStatus, currentPage, currentSearch);
+      }
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [currentStatus, currentPage, currentSearch, selectedTx]);
+
 
   const fetchStats = async () => {
     try {

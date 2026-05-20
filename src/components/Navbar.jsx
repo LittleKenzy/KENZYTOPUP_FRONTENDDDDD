@@ -1,14 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Gamepad2, LogOut, User, History, Home, CreditCard, Shield, Gift, Copy } from 'lucide-react';
+import { Gamepad2, LogOut, User, History, Home, CreditCard, Shield, Gift, Copy, Bell } from 'lucide-react';
 import api from '../api/axios';
 import Modal from './Modal';
 import Toast from './Toast';
+import { useOrderNotifications } from '../hooks/useOrderNotifications';
+import { formatRupiah, formatDate } from '../utils/formatters';
+
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Real-time Order Notifications for Admin
+  const { newOrders, unreadCount, markAllRead, clearNotifications } = useOrderNotifications();
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const notifRef = useRef(null);
+
+  // Click outside to close notification dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setIsNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const getRelativeTime = (dateString) => {
+    if (!dateString) return 'Baru saja';
+    const diffMs = new Date() - new Date(dateString);
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Baru saja';
+    if (diffMins < 60) return `${diffMins}m yang lalu`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}j yang lalu`;
+    return formatDate(dateString);
+  };
+
   const [points, setPoints] = useState(0);
   const [isPointsModalOpen, setIsPointsModalOpen] = useState(false);
   const [loyaltyConfig, setLoyaltyConfig] = useState(null);
@@ -70,7 +101,7 @@ export default function Navbar() {
   const handleRedeem = async (e) => {
     e.preventDefault();
     if (!redeemAmount) return;
-    
+
     setIsRedeeming(true);
     try {
       const res = await api.post('/loyalty/redeem', { points: parseInt(redeemAmount, 10) });
@@ -129,7 +160,7 @@ export default function Navbar() {
           {user ? (
             <div className="user-info">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <button 
+                <button
                   onClick={() => setIsPointsModalOpen(true)}
                   style={{
                     display: 'flex',
@@ -147,6 +178,183 @@ export default function Navbar() {
                 >
                   <Gift size={16} /> {points} Poin
                 </button>
+
+                {/* ─── REAL-TIME ORDER NOTIFICATION BELL (ADMIN ONLY) ─── */}
+                {user?.role === 'admin' && (
+                  <div ref={notifRef} style={{ position: 'relative' }}>
+                    <style>{`
+                      @keyframes pulseGlow {
+                        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.4); }
+                        70% { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(233, 69, 96, 0); }
+                        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(233, 69, 96, 0); }
+                      }
+                      @media (max-width: 768px) {
+                        .notif-dropdown {
+                          position: fixed !important;
+                          top: 72px !important;
+                          right: 16px !important;
+                          width: 328px !important;
+                          max-height: 70vh !important;
+                          box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
+                          z-index: 9999 !important;
+                        }
+                      }
+                      @media (max-width: 360px) {
+                        .notif-dropdown {
+                          right: 8px !important;
+                          left: 8px !important;
+                          width: calc(100vw - 16px) !important;
+                        }
+                      }
+                    `}</style>
+                    <button
+                      onClick={() => {
+                        setIsNotifOpen(!isNotifOpen);
+                        if (!isNotifOpen) {
+                          markAllRead();
+                        }
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        backgroundColor: unreadCount > 0 ? 'rgba(233, 69, 96, 0.15)' : 'var(--secondary-bg)',
+                        color: unreadCount > 0 ? 'var(--accent)' : 'var(--text-muted)',
+                        border: unreadCount > 0 ? '1px solid rgba(233, 69, 96, 0.4)' : '1px solid var(--border)',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        position: 'relative'
+                      }}
+                      title="Notifikasi Order Baru"
+                    >
+                      <Bell size={16} style={{ animation: unreadCount > 0 ? 'pulseGlow 2s infinite' : 'none' }} />
+                      {unreadCount > 0 && (
+                        <span style={{
+                          position: 'absolute',
+                          top: '-4px',
+                          right: '-4px',
+                          backgroundColor: 'var(--accent)',
+                          color: '#fff',
+                          borderRadius: '50%',
+                          width: '16px',
+                          height: '16px',
+                          fontSize: '0.675rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 800,
+                          boxShadow: '0 0 8px var(--accent)'
+                        }}>
+                          {unreadCount}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Beautiful glassmorphism dropdown popover */}
+                    {isNotifOpen && (
+                      <div className="card animate-fade-in notif-dropdown" style={{
+                        position: 'absolute',
+                        right: '-80px',
+                        top: '42px',
+                        width: '320px',
+                        maxHeight: '400px',
+                        padding: '1rem',
+                        zIndex: 100,
+                        backgroundColor: 'var(--surface-card)',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '0.75rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.75rem',
+                        backdropFilter: 'blur(10px)'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+                          <h4 style={{ fontSize: '0.9rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', fontFamily: 'var(--font-body)' }}>
+                            <Bell size={14} color="var(--accent)" /> Order Masuk Terbaru
+                          </h4>
+                          {newOrders.length > 0 && (
+                            <button
+                              onClick={() => {
+                                clearNotifications();
+                                setIsNotifOpen(false);
+                              }}
+                              style={{ fontSize: '0.75rem', color: 'var(--text-muted)', cursor: 'pointer' }}
+                              onMouseOver={(e) => e.target.style.color = 'var(--accent)'}
+                              onMouseOut={(e) => e.target.style.color = 'var(--text-muted)'}
+                            >
+                              Hapus
+                            </button>
+                          )}
+                        </div>
+
+                        <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', paddingRight: '4px' }}>
+                          {newOrders.length > 0 ? (
+                            newOrders.map((order) => (
+                              <div
+                                key={order.id}
+                                onClick={() => {
+                                  setIsNotifOpen(false);
+                                  navigate(`/admin?search=${order.id}`);
+                                }}
+                                style={{
+                                  padding: '0.75rem',
+                                  borderRadius: '0.5rem',
+                                  backgroundColor: 'rgba(255,255,255,0.02)',
+                                  border: '1px solid var(--border)',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                  textAlign: 'left'
+                                }}
+                                onMouseOver={(e) => {
+                                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)';
+                                  e.currentTarget.style.borderColor = 'rgba(233, 69, 96, 0.3)';
+                                }}
+                                onMouseOut={(e) => {
+                                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)';
+                                  e.currentTarget.style.borderColor = 'var(--border)';
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 700, fontFamily: 'monospace' }}>#{order.id.slice(-6).toUpperCase()}</span>
+                                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{getRelativeTime(order.createdAt)}</span>
+                                </div>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.125rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {order.product?.name || 'Top Up Game'}
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem' }}>
+                                  <span style={{ color: 'var(--text-muted)' }}>👤 {order.user?.name || 'Guest'}</span>
+                                  <span style={{ color: 'var(--success)', fontWeight: 700 }}>{formatRupiah(order.totalPrice)}</span>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div style={{ padding: '2.5rem 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                              Belum ada order baru hari ini.
+                            </div>
+                          )}
+                        </div>
+
+                        {newOrders.length > 0 && (
+                          <button
+                            onClick={() => {
+                              setIsNotifOpen(false);
+                              navigate('/admin');
+                            }}
+                            className="btn btn-primary"
+                            style={{ padding: '0.5rem', fontSize: '0.8rem', width: '100%', borderRadius: '0.5rem', cursor: 'pointer' }}
+                          >
+                            Kelola Transaksi
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div style={{
                   width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--secondary-bg)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center'
@@ -178,19 +386,19 @@ export default function Navbar() {
             <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Saldo Poin: {points}</h3>
             {loyaltyConfig && (
               <p style={{ color: 'var(--text-muted)' }}>
-                Tukar poin dengan kode diskon!<br/>
-                1 Poin = Rp{loyaltyConfig.pointValue}<br/>
+                Tukar poin dengan kode diskon!<br />
+                1 Poin = Rp{loyaltyConfig.pointValue}<br />
                 Minimal penukaran: {loyaltyConfig.minRedeemPoints} Poin
               </p>
             )}
           </div>
-          
+
           <form onSubmit={handleRedeem}>
             <div className="form-group">
               <label className="form-label">Jumlah Poin yang Ingin Ditukar</label>
-              <input 
-                type="number" 
-                className="form-input" 
+              <input
+                type="number"
+                className="form-input"
                 placeholder={`Minimal ${loyaltyConfig?.minRedeemPoints || 100}`}
                 value={redeemAmount}
                 onChange={(e) => setRedeemAmount(e.target.value)}
@@ -215,9 +423,9 @@ export default function Navbar() {
               <h4 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>Voucher Aktif Anda</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {myVouchers.map(v => (
-                  <div key={v.id} style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <div key={v.id} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '1rem',
                     backgroundColor: 'var(--surface-card)',
@@ -236,9 +444,9 @@ export default function Navbar() {
                       <div style={{ backgroundColor: 'var(--secondary-bg)', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontFamily: 'monospace', fontWeight: 'bold', letterSpacing: '2px' }}>
                         {v.discountCode}
                       </div>
-                      <button 
-                        className="btn btn-outline" 
-                        style={{ padding: '0.5rem' }} 
+                      <button
+                        className="btn btn-outline"
+                        style={{ padding: '0.5rem' }}
                         onClick={() => {
                           navigator.clipboard.writeText(v.discountCode);
                           setToast({ message: 'Kode voucher disalin!', type: 'success' });
