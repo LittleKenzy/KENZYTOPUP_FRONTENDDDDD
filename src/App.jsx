@@ -21,6 +21,9 @@ import AdminFlashSales from './pages/admin/FlashSales';
 import AdminLoyalty from './pages/admin/Loyalty';
 import AdminMissions from './pages/admin/Missions';
 import AdminWaBlast from './pages/admin/WaBlast';
+import NotificationsPage from './pages/NotificationsPage';
+import LoyaltyPage from './pages/LoyaltyPage';
+import MissionsPage from './pages/MissionsPage';
 import WhatsAppButton from './components/WhatsAppButton';
 
 function App() {
@@ -44,6 +47,30 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Riwayat />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/notifications" 
+                element={
+                  <ProtectedRoute>
+                    <NotificationsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/loyalty" 
+                element={
+                  <ProtectedRoute>
+                    <LoyaltyPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/missions" 
+                element={
+                  <ProtectedRoute>
+                    <MissionsPage />
                   </ProtectedRoute>
                 } 
               />

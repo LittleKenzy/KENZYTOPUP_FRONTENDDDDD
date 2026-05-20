@@ -1,0 +1,100 @@
+.notification-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background-color: var(--card-bg, #ffffff);
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+}
+
+.notification-toggle__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notification-toggle__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+  margin: 0;
+}
+
+.notification-toggle__description {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #64748b);
+  margin: 0;
+}
+
+.notification-toggle__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 0.813rem;
+  font-weight: 500;
+}
+
+.notification-toggle__status--active {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.notification-toggle__status--inactive {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.notification-toggle__button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-size: 0.875rem;
+}
+
+.btn-activate {
+  background-color: var(--primary-color, #2563eb);
+  color: white;
+}
+
+.btn-activate:hover:not(:disabled) {
+  background-color: var(--primary-hover, #1d4ed8);
+}
+
+.btn-deactivate {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.btn-deactivate:hover:not(:disabled) {
+  background-color: #fecaca;
+}
+
+.notification-toggle__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.notification-toggle__error {
+  color: #ef4444;
+  font-size: 0.75rem;
+  background-color: #fef2f2;
+  padding: 8px;
+  border-radius: 6px;
+  border-left: 3px solid #ef4444;
+}
+
+.notification-toggle__unsupported {
+  color: #64748b;
+  font-size: 0.875rem;
+  font-style: italic;
+  padding: 12px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  text-align: center;
+}

@@ -7,6 +7,7 @@ import Modal from './Modal';
 import Toast from './Toast';
 import { useOrderNotifications } from '../hooks/useOrderNotifications';
 import { formatRupiah, formatDate } from '../utils/formatters';
+import NotificationBell from './NotificationBell';
 
 
 export default function Navbar() {
@@ -160,6 +161,8 @@ export default function Navbar() {
           {user ? (
             <div className="user-info">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <NotificationBell />
+                
                 <button
                   onClick={() => setIsPointsModalOpen(true)}
                   style={{
